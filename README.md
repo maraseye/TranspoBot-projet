@@ -30,8 +30,3 @@
 - Rapport PDF (MCD, MLD, architecture, tests)
 - Présentation PowerPoint (démo)
 
-## Technologies
-- Backend : FastAPI (Python)
-- Base de données : MySQL
-- LLM : OpenAI GPT / Ollama (local)
-- Frontend : React (Vite)
