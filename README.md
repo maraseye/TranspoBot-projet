@@ -24,5 +24,5 @@
    http://localhost:5173
    (l'API est appelée via `/api/*` et proxy vers le backend sur `8001`)
 
-## Livrables à rendre
+
 
