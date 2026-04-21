@@ -1,4 +1,4 @@
-# TranspoBot — Projet GLSi L3 ESP/UCAD
+# TranspoBot — Projet DIC1 ESP/UCAD
 
 ## Démarrage rapide
 
