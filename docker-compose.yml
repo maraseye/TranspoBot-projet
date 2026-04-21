@@ -1,0 +1,82 @@
+version: "3.9"
+name: mara-transpobot
+
+services:
+
+  # ─── Base de données MySQL ─────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: transpobot_db
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Backend FastAPI ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+    container_name: transpobot_backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-15}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # Traefik route /api/* et /health vers le backend FastAPI
+      - "traefik.http.routers.transpobot_backend.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || Path(`/health`))"
+      - "traefik.http.routers.transpobot_backend.entrypoints=websecure"
+      - "traefik.http.routers.transpobot_backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.transpobot_backend.loadbalancer.server.port=8000"
+      - "traefik.http.routers.transpobot_backend.priority=10"
+
+  # ─── Frontend React (Nginx — fichiers statiques uniquement) ────────────────
+  frontend:
+    build:
+      context: ./frontend
+    container_name: transpobot_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      # Toutes les autres routes → React
+      - "traefik.http.routers.transpobot_frontend.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.transpobot_frontend.entrypoints=websecure"
+      - "traefik.http.routers.transpobot_frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.transpobot_frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.transpobot_frontend.priority=1"
+
+volumes:
+  db_data:
+
+
+networks:
+  default:
+    external: true
+    name: dokploy-network

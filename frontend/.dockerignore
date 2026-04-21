@@ -1,0 +1,11 @@
+# Ne pas copier depuis l'hôte : écrase node_modules du RUN npm ci (vite → Permission denied)
+node_modules
+dist
+.git
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+*.local

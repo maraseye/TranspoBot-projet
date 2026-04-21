@@ -1,0 +1,32 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+
+# Variables d'environnement (NE JAMAIS committer !)
+.env
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Editeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker volumes
+letsencrypt/
+
+# OS
+.DS_Store
+Thumbs.db
